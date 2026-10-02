@@ -149,5 +149,9 @@ func (s *SettingService) UpdatePelicanShowcaseSettings(ctx context.Context, enab
 	if err := s.settingRepo.SetMultiple(ctx, updates); err != nil {
 		return PelicanShowcaseRuntime{}, err
 	}
+	// Refresh the injected public settings used by sidebar feature flags.
+	if s.onUpdate != nil {
+		s.onUpdate()
+	}
 	return PelicanShowcaseRuntime{Enabled: enabled, APIEnabled: currentAPIEnabled, Config: normalized}, nil
 }

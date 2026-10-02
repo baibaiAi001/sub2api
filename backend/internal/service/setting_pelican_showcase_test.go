@@ -97,3 +97,26 @@ func TestUpdatePelicanShowcaseOmittedAPISwitchReadFailureDoesNotWrite(t *testing
 	require.ErrorIs(t, err, repo.readErr)
 	require.Nil(t, repo.saved)
 }
+
+func TestPelicanShowcaseSaveInvalidatesPublicHTMLAfterPersistence(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		repo := &showcaseRuntimeSettingRepo{values: map[string]string{}}
+		if fail {
+			repo.writeErr = errors.New("write failed")
+		}
+		svc := &SettingService{settingRepo: repo}
+		called := false
+		svc.SetOnUpdateCallback(func() {
+			called = true
+			require.Equal(t, "true", repo.values[SettingKeyPelicanShowcaseEnabled])
+		})
+		_, err := svc.UpdatePelicanShowcaseSettings(context.Background(), true, DefaultPelicanShowcaseConfig(), nil)
+		if fail {
+			require.Error(t, err)
+			require.False(t, called)
+		} else {
+			require.NoError(t, err)
+			require.True(t, called)
+		}
+	}
+}
