@@ -17,6 +17,16 @@ export interface DefaultSubscriptionSetting {
   validity_days: number;
 }
 
+/** 管理员维护的使用教程视频配置。公开接口只返回 enabled=true 的条目。 */
+export interface TutorialVideoSetting {
+  id: string;
+  title: string;
+  cover_url: string;
+  video_url: string;
+  enabled: boolean;
+  sort_order: number;
+}
+
 // ── 平台限额类型 ──────────────────────────────────────────────────
 export type PlatformType = "anthropic" | "openai" | "gemini" | "antigravity" | "grok" | "typesafe"
 export type QuotaWindowType = "daily" | "weekly" | "monthly"
@@ -491,6 +501,7 @@ export interface SystemSettings {
   backend_mode_enabled: boolean;
   custom_menu_items: CustomMenuItem[];
   custom_endpoints: CustomEndpoint[];
+  tutorial_videos: TutorialVideoSetting[];
   // SMTP settings
   smtp_host: string;
   smtp_port: number;
@@ -875,6 +886,7 @@ export interface UpdateSettingsRequest {
   backend_mode_enabled?: boolean;
   custom_menu_items?: CustomMenuItem[];
   custom_endpoints?: CustomEndpoint[];
+  tutorial_videos?: TutorialVideoSetting[];
   smtp_host?: string;
   smtp_port?: number;
   smtp_username?: string;

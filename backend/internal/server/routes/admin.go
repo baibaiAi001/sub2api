@@ -2,10 +2,12 @@
 package routes
 
 import (
+	"github.com/Wei-Shaw/sub2api/internal/extensions/tutorials"
 	"github.com/Wei-Shaw/sub2api/internal/handler"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/Wei-Shaw/sub2api/internal/setup"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,6 +40,8 @@ func RegisterAdminRoutes(
 	admin.Use(h.Admin.Account.AuthorizeObserver)
 	admin.Use(middleware.AdminComplianceGuard(settingService))
 	{
+		tutorials.RegisterAdminRoutes(admin, setup.GetDataDir())
+
 		// Optional region-to-Pod routing, configured inside Gateway settings.
 		admin.GET("/serverless", h.Admin.Setting.GetServerless)
 		admin.PUT("/serverless", h.Admin.Setting.SaveServerless)

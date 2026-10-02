@@ -1,6 +1,7 @@
 package handler
 
 import (
+	imagegenerationhandler "github.com/Wei-Shaw/sub2api/internal/extensions/image-generation/handler"
 	"github.com/Wei-Shaw/sub2api/internal/handler/admin"
 	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
 )
@@ -75,6 +76,7 @@ type Handlers struct {
 	ModelPlaza       *ModelPlazaHandler
 	AsyncImage       *AsyncImageHandler
 	BatchImage       *BatchImageHandler
+	ImageGeneration  *imagegenerationhandler.Handler
 }
 
 // BuildInfo contains build-time information

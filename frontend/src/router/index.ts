@@ -230,6 +230,43 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/tutorials',
+    name: 'Tutorials',
+    component: () => import('@/features/tutorials/views/TutorialsView.vue'),
+    meta: {
+      // Enabled tutorial videos are intentionally public content, matching the
+      // public settings payload used to render the page before login.
+      requiresAuth: false,
+      title: 'Tutorials',
+      titleKey: 'tutorials.title',
+      descriptionKey: 'tutorials.description'
+    }
+  },
+  {
+    path: '/image-generation',
+    name: 'ImageGeneration',
+    component: () => import('@/features/image-generation/views/ImageGenerationView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Image Studio',
+      titleKey: 'imageGeneration.title',
+      descriptionKey: 'imageGeneration.description'
+    }
+  },
+  {
+    path: '/image-generation/settings',
+    name: 'ImageGenerationSettings',
+    component: () => import('@/features/image-generation/views/ImageGenerationSettingsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Image Studio Settings',
+      titleKey: 'imageGeneration.settings.title',
+      descriptionKey: 'imageGeneration.settings.description'
+    }
+  },
+  {
     path: '/usage',
     name: 'Usage',
     component: () => import('@/views/user/UsageEntryView.vue'),
@@ -759,6 +796,7 @@ const routes: RouteRecordRaw[] = [
     }
   },
 
+
   // ==================== 404 Not Found ====================
   {
     path: '/:pathMatch(.*)*',
@@ -797,7 +835,7 @@ let authInitialized = false
 const navigationLoading = useNavigationLoadingState()
 // 延迟初始化预加载，传入 router 实例
 let routePrefetch: ReturnType<typeof useRoutePrefetch> | null = null
-const BACKEND_MODE_ALLOWED_PATHS = ['/login', '/key-usage', '/setup', '/payment/result', '/payment/airwallex', '/legal']
+const BACKEND_MODE_ALLOWED_PATHS = ['/login', '/key-usage', '/setup', '/payment/result', '/payment/airwallex', '/legal', '/tutorials']
 const BACKEND_MODE_CALLBACK_PATHS = [
   '/auth/callback',
   '/auth/linuxdo/callback',

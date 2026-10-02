@@ -174,6 +174,7 @@ export default {
     announcements: '公告',
     apiKeys: 'API 密钥',
     batchImage: '批量生图',
+    imageGeneration: '图片创作',
     usage: '使用记录',
     redeem: '兑换',
     affiliate: '邀请返利',
@@ -208,6 +209,7 @@ export default {
     recharge: '充值',
     subscribe: '订阅',
     docs: '文档',
+    tutorials: '使用教程',
     myOrders: '我的订单',
     orderManagement: '订单管理',
     paymentDashboard: '支付概览',
@@ -223,6 +225,24 @@ export default {
     contentModeration: '内容审计',
     promptAudit: '提示词审计',
     auditLogs: '操作日志',
+  },
+
+  tutorials: {
+    title: '使用教程',
+    description: '通过文档和视频快速了解平台的使用方法。',
+    documents: {
+      title: '使用教程文档',
+      description: '在线阅读完整的产品使用文档。',
+    },
+    videos: {
+      title: '使用教程视频',
+      description: '选择视频教程，在新窗口中打开播放。',
+      loading: '正在加载视频教程...',
+      empty: '暂无可用的视频教程。',
+      error: '视频教程加载失败，请稍后重试。',
+      open: '打开教程：{title}',
+      playCount: '播放量：{count}',
+    },
   },
 
   // Auth

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"github.com/Wei-Shaw/sub2api/internal/config"
+	imagegenerationhandler "github.com/Wei-Shaw/sub2api/internal/extensions/image-generation/handler"
+	imagegenerationservice "github.com/Wei-Shaw/sub2api/internal/extensions/image-generation/service"
 	"github.com/Wei-Shaw/sub2api/internal/handler/admin"
 	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -172,6 +174,18 @@ func ProvideBatchImageHandler(
 	return h
 }
 
+// ProvideImageGenerationHandler keeps the extension dependent on the public
+// Images method rather than on OpenAIGatewayHandler's private implementation.
+func ProvideImageGenerationHandler(
+	apiKeyService *service.APIKeyService,
+	modelPlazaService *service.ModelPlazaService,
+	settingRepository service.SettingRepository,
+	openAI *OpenAIGatewayHandler,
+) *imagegenerationhandler.Handler {
+	policy := imagegenerationservice.NewService(apiKeyService, modelPlazaService, apiKeyService, settingRepository)
+	return imagegenerationhandler.NewHandler(policy, openAI)
+}
+
 // ProvideSystemHandler creates admin.SystemHandler with UpdateService and the
 // Mihomo node checks backed by the admin proxy diagnostics.
 func ProvideSystemHandler(updateService *service.UpdateService, lockService *service.SystemOperationLockService, adminService service.AdminService) *admin.SystemHandler {
@@ -220,6 +234,7 @@ func ProvideHandlers(
 	modelPlazaHandler *ModelPlazaHandler,
 	asyncImageHandler *AsyncImageHandler,
 	batchImageHandler *BatchImageHandler,
+	imageGenerationHandler *imagegenerationhandler.Handler,
 	_ *service.IdempotencyCoordinator,
 	_ *service.IdempotencyCleanupService,
 	_ *service.OpenAIQuotaAutoResetService,
@@ -247,6 +262,7 @@ func ProvideHandlers(
 		ModelPlaza:       modelPlazaHandler,
 		AsyncImage:       asyncImageHandler,
 		BatchImage:       batchImageHandler,
+		ImageGeneration:  imageGenerationHandler,
 	}
 }
 
@@ -274,6 +290,7 @@ var ProviderSet = wire.NewSet(
 	NewModelPlazaHandler,
 	NewAsyncImageHandler,
 	ProvideBatchImageHandler,
+	ProvideImageGenerationHandler,
 
 	// Admin handlers
 	admin.NewDashboardHandler,
