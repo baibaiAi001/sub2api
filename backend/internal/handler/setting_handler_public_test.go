@@ -19,6 +19,38 @@ type settingHandlerPublicRepoStub struct {
 	values map[string]string
 }
 
+func TestSettingHandler_GetPublicSettings_ProtocolSwitches(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	for _, tc := range []struct {
+		name       string
+		values     map[string]string
+		bps, prism bool
+	}{
+		{"defaults", nil, true, false},
+		{"enabled", map[string]string{service.SettingKeyExcelBPSEnabled: "true", service.SettingKeyPrismBrowserEnabled: "true"}, true, true},
+		{"disabled", map[string]string{service.SettingKeyExcelBPSEnabled: "false", service.SettingKeyPrismBrowserEnabled: "false"}, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewSettingHandler(service.NewSettingService(&settingHandlerPublicRepoStub{values: tc.values}, &config.Config{}), "test")
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/settings/public", nil)
+			h.GetPublicSettings(c)
+			require.Equal(t, http.StatusOK, w.Code)
+			var body struct {
+				Data map[string]json.RawMessage `json:"data"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+			for key, want := range map[string]bool{"excel_bps_enabled": tc.bps, "prism_browser_enabled": tc.prism} {
+				require.Contains(t, body.Data, key)
+				var got bool
+				require.NoError(t, json.Unmarshal(body.Data[key], &got))
+				require.Equal(t, want, got, key)
+			}
+		})
+	}
+}
+
 func (s *settingHandlerPublicRepoStub) Get(ctx context.Context, key string) (*service.Setting, error) {
 	panic("unexpected Get call")
 }
