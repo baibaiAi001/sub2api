@@ -1197,8 +1197,9 @@ func ProvideChannelMonitorV2Aggregator(repo ChannelMonitorV2Repository, db *sql.
 	return aggregator
 }
 
-func ProvideAccountOpsService(settings SettingRepository, repo AccountOpsRepository, email *EmailService, accounts AccountRepository, groups GroupRepository, cfg *config.Config, encryptor SecretEncryptor, usageCache *UsageCache, usageLogs UsageLogRepository, geminiQuota *GeminiQuotaService) *AccountOpsService {
+func ProvideAccountOpsService(settings SettingRepository, repo AccountOpsRepository, email *EmailService, accounts AccountRepository, groups GroupRepository, cfg *config.Config, encryptor SecretEncryptor, usageCache *UsageCache, usageLogs UsageLogRepository, geminiQuota *GeminiQuotaService, newAPIGroupReader NewAPIAuthorizationRepository) *AccountOpsService {
 	svc := NewAccountOpsService(settings, repo, email)
+	svc.SetNewAPIGroupReader(newAPIGroupReader)
 	svc.SetNotificationDependencies(accounts, encryptor, cfg.Totp.EncryptionKeyConfigured, cfg.Timezone)
 	svc.SetNotificationUsageCache(usageCache)
 	svc.SetNotificationQuotaReaders(usageLogs, geminiQuota)
