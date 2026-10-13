@@ -50,12 +50,16 @@ const (
 
 // TestEvent represents a SSE event for account testing
 type TestEvent struct {
-	Type     string `json:"type"`
-	Text     string `json:"text,omitempty"`
-	Model    string `json:"model,omitempty"`
-	Status   string `json:"status,omitempty"`
-	Code     string `json:"code,omitempty"`
-	ImageURL string `json:"image_url,omitempty"`
+	UpstreamStatus    int    `json:"upstream_status,omitempty"`
+	UpstreamModel     string `json:"upstream_model,omitempty"`
+	RequestID         string `json:"request_id,omitempty"`
+	UpstreamErrorCode string `json:"upstream_error_code,omitempty"`
+	Type              string `json:"type"`
+	Text              string `json:"text,omitempty"`
+	Model             string `json:"model,omitempty"`
+	Status            string `json:"status,omitempty"`
+	Code              string `json:"code,omitempty"`
+	ImageURL          string `json:"image_url,omitempty"`
 	// AudioURL / VideoURL are data: or https URLs for in-browser media players.
 	AudioURL string `json:"audio_url,omitempty"`
 	VideoURL string `json:"video_url,omitempty"`
@@ -1065,13 +1069,13 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 		proxyURL = account.Proxy.URL()
 	}
 
-	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, true)
+	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, true, payloadBytes)
 	if err != nil {
 		return s.sendErrorAndEnd(c, fmt.Sprintf("Request failed: %s", err.Error()))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if isOAuth && s.accountRepo != nil {
+	if isOAuth && s.accountRepo != nil && !IsAstraSourceAcquisition(ctx) {
 		if updates, err := extractOpenAICodexProbeUpdates(resp); err == nil && len(updates) > 0 {
 			_ = s.accountRepo.UpdateExtra(ctx, account.ID, updates)
 			mergeAccountExtra(account, updates)
@@ -1093,7 +1097,7 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 			s.reconcileOpenAI429State(ctx, account, resp.Header, body)
 		}
 		// 401 Unauthorized: 标记账号为永久错误
-		if resp.StatusCode == http.StatusUnauthorized && s.accountRepo != nil {
+		if resp.StatusCode == http.StatusUnauthorized && s.accountRepo != nil && !IsAstraSourceAcquisition(ctx) {
 			errMsg := fmt.Sprintf("Authentication failed (401): %s", string(body))
 			_ = s.accountRepo.SetError(ctx, account.ID, errMsg)
 		}
@@ -1120,7 +1124,7 @@ func (s *AccountTestService) testExcelBPSAccountConnection(c *gin.Context, accou
 
 	probe := httptest.NewRecorder()
 	probeCtx, _ := gin.CreateTestContext(probe)
-	probeCtx.Request = c.Request.Clone(c.Request.Context())
+	probeCtx.Request = c.Request.Clone(s.withBPSTestEvidence(c.Request.Context(), c))
 	if probeCtx.Request.Header == nil {
 		probeCtx.Request.Header = make(http.Header)
 	}
@@ -2543,7 +2547,7 @@ func (s *AccountTestService) testOpenAICompactConnection(c *gin.Context, account
 		proxyURL = account.Proxy.URL()
 	}
 
-	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, true)
+	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, true, payloadBytes)
 	if err != nil {
 		if s.accountRepo != nil {
 			updates := buildOpenAICompactProbeExtraUpdates(nil, nil, err, false, time.Now())
@@ -2599,6 +2603,10 @@ func (s *AccountTestService) testOpenAICompactConnection(c *gin.Context, account
 }
 
 func (s *AccountTestService) reconcileOpenAI429State(ctx context.Context, account *Account, headers http.Header, body []byte) {
+	// Route collection is observational, including upstream authentication and quota failures.
+	if IsAstraSourceAcquisition(ctx) {
+		return
+	}
 	if s == nil || s.accountRepo == nil || account == nil {
 		return
 	}
@@ -2836,14 +2844,7 @@ func (s *AccountTestService) buildGeminiOAuthRequest(ctx context.Context, accoun
 }
 
 func (s *AccountTestService) buildGeminiServiceAccountRequest(ctx context.Context, account *Account, modelID string, payload []byte) (*http.Request, error) {
-	if s.geminiTokenProvider == nil {
-		return nil, fmt.Errorf("gemini token provider not configured")
-	}
-	accessToken, err := s.geminiTokenProvider.GetAccessToken(ctx, account)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get service account access token: %w", err)
-	}
-	fullURL, err := buildVertexGeminiURL(account.VertexProjectID(), account.VertexLocation(modelID), modelID, "streamGenerateContent", true)
+	fullURL, err := buildVertexGeminiAccountURL(account, modelID, "streamGenerateContent", true)
 	if err != nil {
 		return nil, err
 	}
@@ -2852,7 +2853,9 @@ func (s *AccountTestService) buildGeminiServiceAccountRequest(ctx context.Contex
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+accessToken)
+	if err := setVertexGeminiAuth(ctx, req, account, s.geminiTokenProvider); err != nil {
+		return nil, fmt.Errorf("failed to authenticate vertex request: %w", err)
+	}
 	return req, nil
 }
 
@@ -3490,7 +3493,7 @@ func (s *AccountTestService) testOpenAIImageOAuth(c *gin.Context, ctx context.Co
 	if account.ProxyID != nil && account.Proxy != nil {
 		proxyURL = account.Proxy.URL()
 	}
-	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, false)
+	resp, err := s.doOpenAIAccountTestUpstream(req, proxyURL, account, false, responsesBody)
 	if err != nil {
 		return s.sendErrorAndEnd(c, fmt.Sprintf("Image upstream request failed: %s", err.Error()))
 	}
