@@ -41,7 +41,7 @@ func TestRegionalSchedulerPreviewBlocksBeforeAuthentication(t *testing.T) {
 	router := gin.New()
 	cfg := &config.Config{Runtime: config.RuntimeConfig{Role: config.RuntimeRoleGateway, RegionalSchedulerFile: "preview.json"}, Gateway: config.GatewayConfig{MaxBodySize: 1024, TextMaxBodySize: 1024}}
 	h := &handler.Handlers{Gateway: &handler.GatewayHandler{}, OpenAIGateway: &handler.OpenAIGatewayHandler{}, AsyncImage: handler.NewAsyncImageHandler(nil, nil)}
-	registerRoutes(router, h, nil, nil, nil, func(c *gin.Context) { t.Fatal("preview reached primary authentication") }, nil, nil, nil, nil, nil, nil, nil, cfg, nil)
+	registerRoutes(router, h, nil, nil, nil, func(c *gin.Context) { t.Fatal("preview reached primary authentication") }, nil, nil, nil, nil, nil, nil, nil, cfg, nil, nil)
 	for _, path := range []string{"/v1/models", "/v1/responses", "/v1/messages", "/v1/chat/completions"} {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, httptest.NewRequest(func() string {
@@ -62,7 +62,7 @@ func TestRegionalAuthPreviewNeverFallsBackToPrimary(t *testing.T) {
 	router := gin.New()
 	cfg := &config.Config{Runtime: config.RuntimeConfig{Role: config.RuntimeRoleGateway, RegionalAuthFile: "auth.json"}, Gateway: config.GatewayConfig{MaxBodySize: 1024, TextMaxBodySize: 1024}}
 	h := &handler.Handlers{Gateway: &handler.GatewayHandler{}, OpenAIGateway: &handler.OpenAIGatewayHandler{}, AsyncImage: handler.NewAsyncImageHandler(nil, nil)}
-	registerRoutes(router, h, nil, nil, nil, func(c *gin.Context) { t.Fatal("regional auth reached primary middleware") }, nil, nil, nil, nil, nil, nil, nil, cfg, nil)
+	registerRoutes(router, h, nil, nil, nil, func(c *gin.Context) { t.Fatal("regional auth reached primary middleware") }, nil, nil, nil, nil, nil, nil, nil, cfg, nil, nil)
 	for _, path := range []string{"/v1/models", "/v1/responses", "/v1/messages", "/v1/chat/completions", "/v1beta/models"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 		req.Header.Set("Authorization", "Bearer key")
