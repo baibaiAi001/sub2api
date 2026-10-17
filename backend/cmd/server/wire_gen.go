@@ -163,6 +163,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	notificationEmailService := service.NewNotificationEmailService(settingRepository, emailService)
 	balanceNotifyService := service.ProvideBalanceNotifyService(emailService, settingRepository, accountRepository, notificationEmailService)
 	gatewayService := service.NewGatewayService(accountRepository, groupRepository, usageLogRepository, usageBillingRepository, userRepository, userSubscriptionRepository, userGroupRateRepository, gatewayCache, configConfig, schedulerSnapshotService, concurrencyService, billingService, rateLimitService, billingCacheService, identityService, httpUpstream, deferredService, claudeTokenProvider, sessionLimitCache, rpmCache, digestSessionStore, settingService, tlsFingerprintProfileService, channelService, modelPricingResolver, compositeRouteResolver, balanceNotifyService, serviceUserPlatformQuotaRepository)
+	proxyExitInfoProber := repository.NewProxyExitInfoProber(configConfig)
 	regionalMetering, err := repository.ProvideRegionalMetering(db, configConfig, concurrencyCache, redisClient)
 	if err != nil {
 		return nil, err
@@ -177,7 +178,6 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	codexHarvestNodeRepository := repository.NewCodexHarvestNodeRepository(db)
 	codexHarvestFlowRepository := repository.NewCodexHarvestFlowRepository(db)
 	codexHarvestService := service.ProvideCodexHarvestService(codexHarvestNodeRepository, settingRepository, configConfig, codexHarvestFlowRepository)
-	proxyExitInfoProber := repository.NewProxyExitInfoProber(configConfig)
 	openAIGatewayDependencies := service.OpenAIGatewayDependencies{
 		TimezoneProber:   proxyExitInfoProber,
 		RegionalMetering: regionalMetering,
